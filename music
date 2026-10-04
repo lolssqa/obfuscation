@@ -1,0 +1,466 @@
+-- 加载Fluent UI库
+local lib = loadstring(game:HttpGet("https://github.com/lolssqa/obfuscation/releases/download/happy/raw.1.txt"))()
+
+local v = lib:CreateWindow({
+	Title = "LU_HUB_MUSIC",
+	SubTitle = "网易云音乐",
+	TabWidth = 100,
+	Size = UDim2.fromOffset(450, 400),
+	Acrylic = true,
+	Theme = "Dark",
+	MinimizeKey = Enum.KeyCode.LeftControl,
+})
+
+local tbl = {
+	Music = v:AddTab({ Title = "音乐", Icon = "headphones" }),	
+}
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
+local LocalPlayer = Players.LocalPlayer
+local options = lib.Options
+
+local v5 = nil
+local v6 = nil
+local n = 0
+local n2 = nil
+local n3 = 0
+local connection = nil
+local flag = false
+local value6 = nil
+local flag2 = false
+local flag3 = false
+local n4 = 0
+local MusicSeekSlider = nil
+local tbl8 = {}
+
+local function fn3(arg)
+	pcall(function()
+		lib:Notify({ Title = "音乐", Content = arg, Duration = 3 })
+	end)
+end
+
+local function fn4(arg, arg2)
+	local entry3 = tbl8[arg]
+	if entry3 and entry3.SetDesc then
+		pcall(function()
+			entry3:SetDesc(arg2)
+		end)
+	end
+end
+
+local function fn5()
+	pcall(function()
+		writefile("网易云音乐-TX.txt", HttpService:JSONEncode({ history = tbl6, cached = tbl7 }))
+	end)
+end
+
+local function fn6()
+	pcall(function()
+		if isfile("网易云音乐-TX.txt") then
+			local data = HttpService:JSONDecode(readfile("网易云音乐-TX.txt"))
+			if type(data) == "table" then
+				tbl6 = type(data.history) == "table" and data.history or {}
+				tbl7 = type(data.cached) == "table" and data.cached or {}
+			end
+		end
+	end)
+end
+
+local function fn7(arg)
+	for i = 1, 4 do
+		local ok, result = pcall(function()
+			return request({ Url = arg, Method = "GET", Headers = { ["User-Agent"] = "Mozilla/5.0" } })
+		end)
+		if not ok or not result then
+			return nil
+		end
+		if result.StatusCode == 301 or result.StatusCode == 302 or result.StatusCode == 307 or result.StatusCode == 308 then
+			local headers = result.Headers or {}
+			local location = headers.Location or headers.location or headers.Location or headers.location
+			if not location or location == arg then
+				return nil
+			end
+			arg = location:gsub("^http://", "https://")
+			continue
+		end
+		return result.Body
+	end
+	return nil
+end
+
+local function fn8(arg)
+	if not arg or #arg < 4 then
+		return false
+	end
+	return arg:sub(1, 3) == "ID3" or arg:byte(1) == 255
+end
+
+local function fn9(arg)
+	local str = arg .. ".mp3"
+	if isfile(str) then
+		local ok, result = pcall(function()
+			return readfile(str)
+		end)
+		if ok and fn8(result) then
+			local v7 = getsynasset and getsynasset(str) or getcustomasset and getcustomasset(str) or getasset and getasset(str)
+			if v7 then
+				return v7
+			end
+		else
+			pcall(function()
+				delfile(str)
+			end)
+		end
+	end
+	for _, item10 in ipairs({
+		"https://music.163.com/song/media/outer/url?id=" .. arg .. ".mp3",
+		"https://music.163.com/song/media/outer/url?id=" .. arg,
+		"https://api.injahow.cn/meting/?type=url&id=" .. arg,
+	}) do
+		local v8 = fn7(item10)
+		if fn8(v8) then
+			writefile(str, v8)
+			if not table.find(tbl7, arg) then
+				table.insert(tbl7, arg)
+			end
+			fn5()
+			local v9 = getsynasset and getsynasset(str) or getcustomasset and getcustomasset(str) or getasset and getasset(str)
+			if v9 then
+				return v9
+			end
+			return nil
+		end
+	end
+	return nil
+end
+
+local function fn10()
+	if connection then
+		connection:Disconnect()
+		connection = nil
+	end
+	flag = false
+	fn4("countdown", "倒计时: 无")
+	fn4("progress", "播放进度: 00:00 / 00:00")
+	fn4("start", "开始时间: --")
+	fn4("endTime", "结束时间: --")
+end
+
+local function fn11(arg, arg2, timePosition)
+	if v5 then
+		pcall(function()
+			v5:Stop()
+			v5:Destroy()
+		end)
+		v5 = nil
+	end
+	fn10()
+	v6 = arg
+	fn4("song", "当前歌曲: " .. tostring(arg2 or arg))
+	if MusicSeekSlider then
+		flag3 = true
+		pcall(function()
+			MusicSeekSlider:SetValue(0)
+		end)
+		flag3 = false
+	end
+	local v7 = fn9(arg)
+	if not v7 then
+		fn4("countdown", "倒计时: 音频获取失败")
+		fn3("获取音频失败: 歌曲可能为VIP/版权受限, 或注入器缺少API")
+		return
+	end
+	local sound = Instance.new("Sound")
+	sound.Name = "TXMusic"
+	sound.SoundId = v7
+	sound.Parent = workspace
+	if timePosition and timePosition > 0 then
+		sound.TimePosition = timePosition
+	end
+	sound:Play()
+	v5 = sound
+	flag = true
+	pcall(function()
+		sound.PlaybackFailed:Connect(function(arg3)
+			fn3("播放失败: " .. tostring(arg3))
+		end)
+	end)
+	local now = os.time()
+	fn4("start", "开始时间: " .. os.date("%Y-%m-%d %H:%M:%S", now))
+	fn4("countdown", "倒计时: 加载中…")
+	local n5 = 0
+	connection = RunService.Heartbeat:Connect(function(deltaTime)
+		local v8 = v5
+		if not v8 or v8 ~= sound then
+			fn10()
+			return
+		end
+		local timeLength = v8.TimeLength
+		if timeLength <= 0 then
+			return
+		end
+		local n6 = math.clamp(v8.TimePosition, 0, timeLength)
+		if v8.Playing then
+			n5 += deltaTime
+			if n5 >= 0.15 then
+				n5 = 0
+				local n7 = math.max(0, timeLength - n6)
+				fn4("countdown", string.format("倒计时: %02d:%02d", math.floor(n7 / 60), math.floor(n7 % 60)))
+				fn4("progress", string.format("播放进度: %02d:%02d / %02d:%02d", math.floor(n6 / 60), math.floor(n6 % 60), math.floor(timeLength / 60), math.floor(timeLength % 60)))
+				local endStamp = os.time() + n7
+				fn4("endTime", "结束时间: " .. os.date("%Y-%m-%d %H:%M:%S", endStamp))
+				if MusicSeekSlider and os.clock() - n4 > 1.5 then
+					flag3 = true
+					pcall(function()
+						MusicSeekSlider:SetValue(math.floor(n6 / timeLength * 100))
+					end)
+					flag3 = false
+				end
+			end
+		else
+			fn10()
+		end
+	end)
+end
+
+local MusicSongDropdown = nil
+local tbl4 = {}
+local tbl5 = {}
+local tbl6 = {}
+local tbl7 = {}
+
+local function fn12(arg)
+	local str = tostring(arg or "")
+	if str == "" then
+		return
+	end
+	fn4("searchName", str)
+	local v7 = HttpService:UrlEncode(str)
+	local tbl9 = {}
+	for _, item11 in ipairs({
+		"https://music.163.com/api/search/get?s=" .. v7 .. "&type=1&limit=100",
+		"https://music.163.com/api/cloudsearch/pc?s=" .. v7 .. "&type=1&limit=100",
+	}) do
+		local v9 = fn7(item11)
+		if v9 then
+			local ok, result = pcall(function()
+				return HttpService:JSONDecode(v9)
+			end)
+			if (ok and type(result) == "table" and result.result and type(result.result.songs) == "table" and #result.result.songs or 0) > 0 then
+				tbl9 = result.result.songs
+				break
+			end
+		end
+	end
+	if #tbl9 == 0 then
+		fn3("搜索失败或未找到相关歌曲")
+	end
+	tbl4 = {}
+	tbl5 = {}
+	for _, item12 in ipairs(tbl9) do
+		local name = item12.artists and item12.artists[1] and item12.artists[1].name or item12.ar and item12.ar[1] and item12.ar[1].name or "未知歌手"
+		local str2 = tostring(item12.name or "未知歌曲") .. " - " .. name
+		if item12.fee == 1 or item12.fee == 4 then
+			str2 ..= " (VIP)"
+		end
+		table.insert(tbl4, str2)
+		tbl5[str2] = item12.id
+	end
+	n = #tbl4
+	fn4("results", tostring(n))
+	flag2 = true
+	pcall(function()
+		MusicSongDropdown:SetValues(n > 0 and tbl4 or { "无结果" })
+	end)
+	task.defer(function()
+		flag2 = false
+	end)
+end
+
+tbl.Music:AddSection("搜索")
+tbl.Music:AddInput("MusicSearchInput", { Title = "歌曲名称", PlaceholderText = "输入歌名后点击搜索" })
+tbl.Music:AddButton({
+	Title = "搜索",
+	Callback = function()
+		local str = options.MusicSearchInput and options.MusicSearchInput.Value or ""
+		if str ~= "" then
+			fn12(str)
+		else
+			fn3("请输入歌曲名称")
+		end
+	end,
+})
+
+tbl.Music:AddSection("歌曲列表")
+MusicSongDropdown = tbl.Music:AddDropdown("MusicSongDropdown", {
+	Title = "选择歌曲",
+	Values = { "无结果" },
+	Default = 1,
+	Callback = function(value)
+		if flag2 or not value or value == "无结果" then
+			return
+		end
+		local entry4 = tbl5[value]
+		if not entry4 then
+			return
+		end
+		table.insert(tbl6, { id = entry4, name = value })
+		n2 = #tbl6
+		fn5()
+		fn11(entry4, value)
+	end,
+})
+
+tbl8.results = tbl.Music:AddParagraph({ Title = "搜索结果数量", Content = "0" })
+tbl8.searchName = tbl.Music:AddParagraph({ Title = "当前搜索", Content = "无" })
+tbl.Music:AddParagraph({ Title = "提示", Content = "标记(VIP)的歌曲受限制无法下载完整播放, 可搜索翻唱版本或免费歌曲正常播放" })
+
+tbl.Music:AddSection("播放控制")
+tbl.Music:AddButton({
+	Title = "开始播放音乐",
+	Callback = function()
+		if n2 and tbl6[n2] then
+			local entry5 = tbl6[n2]
+			fn11(entry5.id, entry5.name)
+		else
+			fn3("没有歌曲可播放, 请先搜索并选择歌曲")
+		end
+	end,
+})
+tbl.Music:AddButton({
+	Title = "停止播放音乐",
+	Callback = function()
+		if v5 then
+			n3 = v5.TimePosition
+			v5:Stop()
+			fn10()
+		else
+			fn3("没有正在播放的歌曲")
+		end
+	end,
+})
+tbl.Music:AddButton({
+	Title = "继续播放音乐",
+	Callback = function()
+		if n2 and tbl6[n2] then
+			local entry6 = tbl6[n2]
+			fn11(entry6.id, entry6.name, n3)
+		else
+			fn3("没有歌曲可以继续播放")
+		end
+	end,
+})
+tbl.Music:AddButton({
+	Title = "重新播放音乐",
+	Callback = function()
+		if n2 and tbl6[n2] then
+			local entry7 = tbl6[n2]
+			fn11(entry7.id, entry7.name)
+		else
+			fn3("没有歌曲可以重播")
+		end
+	end,
+})
+
+MusicSeekSlider = tbl.Music:AddSlider("MusicSeekSlider", {
+	Title = "播放进度",
+	Min = 0,
+	Max = 100,
+	Default = 0,
+	Rounding = 0,
+	Callback = function(value)
+		if flag3 then
+			return
+		end
+		n4 = os.clock()
+		local v7 = v5
+		if v7 then
+			local timeLength = v7.TimeLength
+			if timeLength > 0 then
+				v7.TimePosition = timeLength * value / 100
+			end
+		end
+	end,
+})
+
+tbl.Music:AddSection("进度信息")
+tbl8.song = tbl.Music:AddParagraph({ Title = "当前歌曲", Content = "无" })
+tbl8.countdown = tbl.Music:AddParagraph({ Title = "倒计时", Content = "无" })
+tbl8.progress = tbl.Music:AddParagraph({ Title = "播放进度", Content = "00:00 / 00:00" })
+tbl8.start = tbl.Music:AddParagraph({ Title = "开始时间", Content = "--" })
+tbl8.endTime = tbl.Music:AddParagraph({ Title = "结束时间", Content = "--" })
+
+fn6()
+if #tbl6 > 0 then
+	n2 = #tbl6
+end
+fn4("song", "当前歌曲: " .. (n2 and tbl6[n2].name or "无"))
+
+tbl.Music:AddSection("清理")
+tbl.Music:AddButton({
+	Title = "删除当前歌曲文件",
+	Callback = function()
+		local v7 = v6
+		if not v7 then
+			fn3("没有当前歌曲")
+			return
+		end
+		local str = v7 .. ".mp3"
+		if isfile(str) then
+			pcall(function()
+				delfile(str)
+			end)
+			local foundAt = table.find(tbl7, v7)
+			if foundAt then
+				table.remove(tbl7, foundAt)
+			end
+			fn5()
+			fn3("已删除缓存文件: " .. v7 .. ".mp3")
+		else
+			fn3("当前歌曲没有本地缓存")
+		end
+	end,
+})
+tbl.Music:AddButton({
+	Title = "清空全部下载",
+	Callback = function()
+		local n5 = 0
+		for _, item13 in ipairs(tbl7) do
+			local str = item13 .. ".mp3"
+			if isfile(str) then
+				pcall(function()
+					delfile(str)
+				end)
+				n5 += 1
+			end
+		end
+		tbl7 = {}
+		if listfiles then
+			pcall(function()
+				for _, listfile in ipairs(listfiles("")) do
+					if type(listfile) == "string" and listfile:match("%.mp3$") then
+						pcall(function()
+							delfile(listfile)
+						end)
+						n5 += 1
+					end
+				end
+			end)
+		end
+		fn5()
+		fn3("已清理 " .. n5 .. " 个缓存文件")
+	end,
+})
+
+lib2:SetLibrary(lib)
+lib3:SetLibrary(lib)
+pcall(function()
+	lib2:IgnoreThemeSettings()
+end)
+lib3:SetFolder("FluentScriptHub")
+lib2:SetFolder("FluentScriptHub/" .. tostring(game.PlaceId))
+lib3:BuildInterfaceSection(tbl.Settings)
+lib2:BuildConfigSection(tbl.Settings)
+lib2:LoadAutoloadConfig()
