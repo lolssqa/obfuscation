@@ -1,0 +1,501 @@
+local lib = loadstring(game:HttpGet("https://github.com/lolssqa/obfuscation/releases/download/happy/raw.1.txt"))()
+local tbl = {}
+local v = lib:CreateWindow({
+	Title = "LU_HUB",
+	SubTitle = "dance plus",
+	TabWidth = 100,
+	Size = UDim2.fromOffset(450, 400),
+	Acrylic = true,
+	Theme = "Dark",
+	MinimizeKey = Enum.KeyCode.LeftControl,
+})
+tbl.Animation = v:AddTab({ Title = "动画", Icon = "music" })
+local animList = {
+	{ Name = "Dance1", Id = "rbxassetid://182436935" },
+	{ Name = "Dance2", Id = "rbxassetid://182436842" },
+	{ Name = "Dance3", Id = "rbxassetid://182435998" },
+	{ Name = "FluteDance", Id = "rbxassetid://52155728" },
+	{ Name = "FDance", Id = "rbxassetid://101862746" },
+	{ Name = "CDance", Id = "rbxassetid://27789359" },
+	{ Name = "DanceT", Id = "rbxassetid://132149582" },
+	{ Name = "Punch", Id = "rbxassetid://28156501" },
+	{ Name = "ArmFly", Id = "rbxassetid://28160593" },
+	{ Name = "Drink", Id = "rbxassetid://94700140" },
+	{ Name = "SwordJump", Id = "rbxassetid://32659699" },
+	{ Name = "HeadThrow", Id = "rbxassetid://35154961" },
+	{ Name = "Curl", Id = "rbxassetid://42070810" },
+	{ Name = "Pitchfork", Id = "rbxassetid://42070871" },
+	{ Name = "Hold", Id = "rbxassetid://182393478" },
+	{ Name = "Float", Id = "rbxassetid://46196309" },
+	{ Name = "BoardKick", Id = "rbxassetid://21417802" },
+	{ Name = "Grenade", Id = "rbxassetid://30188122" },
+	{ Name = "Still", Id = "rbxassetid://31319431" },
+	{ Name = "Crouch", Id = "rbxassetid://287325678" },
+	{ Name = "KickBack", Id = "rbxassetid://33855276" },
+	{ Name = "LegShake", Id = "rbxassetid://87986341" },
+	{ Name = "BendOver", Id = "rbxassetid://216937924" },
+	{ Name = "Bang", Id = "rbxassetid://148840371" },
+	{ Name = "Climb", Id = "rbxassetid://180436334" },
+	{ Name = "Walk", Id = "rbxassetid://130591500" },
+	{ Name = "Villager", Id = "rbxassetid://48138189" },
+	{ Name = "HeadBehind", Id = "rbxassetid://68339848" },
+	{ Name = "ArmsDown", Id = "rbxassetid://56153856" },
+	{ Name = "Wave", Id = "rbxassetid://128777973" },
+	{ Name = "Point", Id = "rbxassetid://128853357" },
+	{ Name = "Laugh", Id = "rbxassetid://129423131" },
+	{ Name = "Cheer", Id = "rbxassetid://129423030" },
+	{ Name = "Axe", Id = "rbxassetid://89283403" },
+	{ Name = "Scared", Id = "rbxassetid://73033721" },
+	{ Name = "Panick", Id = "rbxassetid://73137648" },
+	{ Name = "Scream", Id = "rbxassetid://73137669" },
+	{ Name = "ArmSpin", Id = "rbxassetid://73177702" },
+	{ Name = "Roar", Id = "rbxassetid://75354915" },
+	{ Name = "Wave2", Id = "rbxassetid://75476727" },
+	{ Name = "SprayPaint", Id = "rbxassetid://78494810" },
+	{ Name = "ArmDetach", Id = "rbxassetid://85568863" },
+	{ Name = "GetShot", Id = "rbxassetid://86146856" },
+	{ Name = "HeadGrab", Id = "rbxassetid://86614939" },
+	{ Name = "ImHere", Id = "rbxassetid://90117804" },
+	{ Name = "ArmBreak", Id = "rbxassetid://90814669" },
+	{ Name = "DinoWalk", Id = "rbxassetid://204328711" },
+	{ Name = "ArmBreak2", Id = "rbxassetid://103798833" },
+	{ Name = "Strum", Id = "rbxassetid://55791140" },
+}
+local animTracks = {}
+local loopedTrack = nil
+local playbackSpeed = 1
+local selectedAnim = animList[1]
+local animNameList = {}
+for _,a in ipairs(animList) do
+	table.insert(animNameList, a.Name)
+end
+local function playAnim(animItem, looped)
+	local plr = game.Players.LocalPlayer
+	local char = plr.Character
+	if not char then return lib:Notify({Title="提示",Content="角色不存在",Duration=3}) end
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if not hum then return lib:Notify({Title="提示",Content="找不到Humanoid",Duration=3}) end
+	local animObj = Instance.new("Animation")
+	animObj.AnimationId = animItem.Id
+	local track = hum:LoadAnimation(animObj)
+	if not track then return end
+	track:Play()
+	pcall(function() track.PlaybackSpeed = playbackSpeed end)
+	track.Looped = looped
+	table.insert(animTracks, {track=track,name=animItem.Name})
+	track.Ended:Connect(function()
+		for i=#animTracks,1,-1 do
+			if animTracks[i].track == track then
+				table.remove(animTracks,i)
+				break
+			end
+		end
+	end)
+end
+tbl.Animation:AddParagraph({Title="注意",Content="R6服务器动画可被别人看见，R15不可用"})
+tbl.Animation:AddDropdown("AnimSelect",{
+	Title="选择动画",
+	Values=animNameList,
+	Default=animNameList[1],
+	Callback=function(val)
+		for _,a in ipairs(animList) do
+			if a.Name == val then
+				selectedAnim = a
+				break
+			end
+		end
+	end
+})
+tbl.Animation:AddSlider("AnimSpeed",{
+	Title="动画速度",
+	Min=0,Max=10,Default=1,Rounding=1,
+	Callback=function(spd)
+		playbackSpeed = spd
+		for _,v in ipairs(animTracks) do
+			pcall(function() v.track.PlaybackSpeed = spd end)
+		end
+		if loopedTrack then
+			pcall(function() loopedTrack.PlaybackSpeed = spd end)
+		end
+	end
+})
+tbl.Animation:AddButton({
+	Title="单次播放",
+	Callback=function()
+		playAnim(selectedAnim,false)
+	end
+})
+tbl.Animation:AddToggle("AnimLoop",{
+	Title="循环播放",
+	Default=false,
+	Callback=function(val)
+		if val then
+			if loopedTrack then pcall(function() loopedTrack:Stop() end) end
+			local char = game.Players.LocalPlayer.Character
+			if not char then lib:Notify({Title="提示",Content="角色不存在",Duration=3}) return end
+			local hum = char:FindFirstChildOfClass("Humanoid")
+			if not hum then return end
+			local animObj = Instance.new("Animation")
+			animObj.AnimationId = selectedAnim.Id
+			loopedTrack = hum:LoadAnimation(animObj)
+			loopedTrack.Looped = true
+			loopedTrack.PlaybackSpeed = playbackSpeed
+			loopedTrack:Play()
+		else
+			if loopedTrack then
+				pcall(function() loopedTrack:Stop() end)
+				loopedTrack = nil
+			end
+		end
+	end
+})
+tbl.Animation:AddButton({
+	Title="停止当前动画",
+	Callback=function()
+		for i=#animTracks,1,-1 do
+			if animTracks[i].name == selectedAnim.Name then
+				pcall(function() animTracks[i].track:Stop() end)
+				table.remove(animTracks,i)
+			end
+		end
+	end
+})
+tbl.Animation:AddButton({
+	Title="停止所有动画",
+	Callback=function()
+		for _,v in ipairs(animTracks) do
+			pcall(function() v.track:Stop() end)
+		end
+		animTracks = {}
+		if loopedTrack then
+			pcall(function() loopedTrack:Stop() end)
+			loopedTrack = nil
+		end
+	end
+})
+local animPacks = {
+	Default = {
+		idle = { "507766388", "507766666" },
+		walk = "507777826",
+		run = "507767714",
+		jump = "507765000",
+		fall = "507767968",
+		climb = "507765644",
+		swim = "507784897",
+		swimidle = "507785072",
+	},
+	Astronaut = {
+		idle = { "891621366", "891633237", "1047759695" },
+		walk = "891636393",
+		run = "891636393",
+		jump = "891627522",
+		fall = "891617961",
+		climb = "891609353",
+		swim = "891639666",
+		swimidle = "891663592",
+	},
+	Bubbly = {
+		idle = { "910004836", "910009958", "1018536639" },
+		walk = "910034870",
+		run = "910025107",
+		jump = "910016857",
+		fall = "910001910",
+		climb = "909997997",
+		swim = "910028158",
+		swimidle = "910030921",
+	},
+	Cartoony = {
+		idle = { "742637544", "742638445", "885477856" },
+		walk = "742640026",
+		run = "742638842",
+		jump = "742637942",
+		fall = "742637151",
+		climb = "742636889",
+		swim = "742639220",
+		swimidle = "742639812",
+	},
+	Elder = {
+		idle = { "845397899", "845400520", "901160519" },
+		walk = "845403856",
+		run = "845386501",
+		jump = "845398858",
+		fall = "845396048",
+		climb = "845392038",
+		swim = "845401742",
+		swimidle = "845403127",
+	},
+	Knight = {
+		idle = { "657595757", "657568135", "885499184" },
+		walk = "657552124",
+		run = "657564596",
+		jump = "658409194",
+		fall = "657600338",
+		climb = "658360781",
+		swim = "657560551",
+		swimidle = "657557095",
+	},
+	Levitation = {
+		idle = { "616006778", "616008087", "886862142" },
+		walk = "616013216",
+		run = "616010382",
+		jump = "616008936",
+		fall = "616005863",
+		climb = "616003713",
+		swim = "616011509",
+		swimidle = "616012453",
+	},
+	Mage = {
+		idle = { "707742142", "707855907", "885508740" },
+		walk = "707897309",
+		run = "707861613",
+		jump = "707853694",
+		fall = "707829716",
+		climb = "707826056",
+		swim = "707876443",
+		swimidle = "707894699",
+	},
+	Ninja = {
+		idle = { "656117400", "656118341", "886742569" },
+		walk = "656121766",
+		run = "656118852",
+		jump = "656117878",
+		fall = "656115606",
+		climb = "656114359",
+		swim = "656119721",
+		swimidle = "656121397",
+	},
+	Pirate = {
+		idle = { "750781874", "750782770", "885515365" },
+		walk = "750785693",
+		run = "750783738",
+		jump = "750782230",
+		fall = "750780242",
+		climb = "750779899",
+		swim = "750784579",
+		swimidle = "750785176",
+	},
+	Robot = {
+		idle = { "616088211", "616089559", "885531463" },
+		walk = "616095330",
+		run = "616091570",
+		jump = "616090535",
+		fall = "616087089",
+		climb = "616086039",
+		swim = "616092998",
+		swimidle = "616094091",
+	},
+	Rthro = {
+		idle = { "2510197257", "2510196951", "3711062489" },
+		walk = "2510202577",
+		run = "2510198475",
+		jump = "2510197830",
+		fall = "2510195892",
+		climb = "2510192778",
+		swim = "2510199791",
+		swimidle = "2510201162",
+	},
+	Stylish = {
+		idle = { "616136790", "616138447", "886888594" },
+		walk = "616146177",
+		run = "616140816",
+		jump = "616139451",
+		fall = "616134815",
+		climb = "616133594",
+		swim = "616143378",
+		swimidle = "616144772",
+	},
+	Superhero = {
+		idle = { "616111295", "616113536", "885535855" },
+		walk = "616122287",
+		run = "616117076",
+		jump = "616115533",
+		fall = "616108001",
+		climb = "616104706",
+		swim = "616119360",
+		swimidle = "616120861",
+	},
+	Toy = {
+		idle = { "782841498", "782845736", "980952228" },
+		walk = "782843345",
+		run = "782842708",
+		jump = "782847020",
+		fall = "782846423",
+		climb = "782843869",
+		swim = "782844582",
+		swimidle = "782845186",
+	},
+	Vampire = {
+		idle = { "1083445855", "1083450166", "1088037547" },
+		walk = "1083473930",
+		run = "1083462077",
+		jump = "1083455352",
+		fall = "1083443587",
+		climb = "1083439238",
+		swim = "1083464683",
+		swimidle = "1083467779",
+	},
+	Werewolf = {
+		idle = { "1083195517", "1083214717", "1099492820" },
+		walk = "1083178339",
+		run = "1083216690",
+		jump = "1083218792",
+		fall = "1083189019",
+		climb = "1083182000",
+		swim = "1083222527",
+		swimidle = "1083225406",
+	},
+	Zombie = {
+		idle = { "616158929", "616160636", "885545458" },
+		walk = "616168032",
+		run = "616163682",
+		jump = "616161997",
+		fall = "616157476",
+		climb = "616156119",
+		swim = "616165109",
+		swimidle = "616166655",
+	},
+	Confident = {
+		idle = { "1069977950", "1069987858" },
+		walk = "1070017263",
+		run = "1070001516",
+		jump = "1069984524",
+		fall = "1069973677",
+		climb = "1069946257",
+		swim = "1070009914",
+		swimidle = "1070012133",
+	},
+	Popstar = {
+		idle = { "1212900985", "1212954651", "1212998578", "1212900995" },
+		walk = "1212980338",
+		run = "1212980348",
+		jump = "1212954642",
+		fall = "1212900995",
+		climb = "1213044953",
+		swim = "1212852603",
+		swimidle = "1212998578",
+	},
+}
+local selectedAnimPack = "Default"
+local animPackEnabled = false
+local originalAnimData = nil
+local animPackNameList = {}
+for k in pairs(animPacks) do
+	table.insert(animPackNameList,k)
+end
+local function applyAnimPack(packName)
+	local char = game.Players.LocalPlayer.Character
+	if not char then return end
+	local animate = char:FindFirstChild("Animate")
+	if not animate then return end
+	local pack = animPacks[packName]
+	if not pack then return end
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if hum then
+		local animator = hum:FindFirstChildOfClass("Animator")
+		if animator then
+			for _,track in ipairs(animator:GetPlayingAnimationTracks()) do
+				track:Stop()
+			end
+		end
+	end
+	local idleObj = animate:FindFirstChild("idle")
+	if idleObj and pack.idle then
+		idleObj:ClearAllChildren()
+		for i,idStr in ipairs(pack.idle) do
+			local a = Instance.new("Animation")
+			a.Name = "Animation"..i
+			a.AnimationId = "rbxassetid://"..idStr
+			a.Parent = idleObj
+		end
+	end
+	for _,animKey in ipairs({"walk","run","jump","fall","climb","swim","swimidle"}) do
+		local childObj = animate:FindFirstChild(animKey)
+		local assetId = pack[animKey]
+		if childObj and assetId then
+			childObj:ClearAllChildren()
+			local a = Instance.new("Animation")
+			a.AnimationId = "rbxassetid://"..assetId
+			a.Parent = childObj
+		end
+	end
+	animate.Disabled = true
+	task.wait()
+	animate.Disabled = false
+end
+local function saveOriginalAnimate()
+	local char = game.Players.LocalPlayer.Character
+	if not char then return end
+	local animate = char:FindFirstChild("Animate")
+	if not animate then return end
+	originalAnimData = {}
+	for _,animKey in ipairs({"idle","walk","run","jump","fall","climb","swim","swimidle"}) do
+		local childObj = animate:FindFirstChild(animKey)
+		if childObj then
+			local list = {}
+			for _,a in ipairs(childObj:GetChildren()) do
+				if a:IsA("Animation") then
+					table.insert(list, {name=a.Name,id=a.AnimationId})
+				end
+			end
+			originalAnimData[animKey] = list
+		end
+	end
+end
+local function restoreOriginalAnimate()
+	if not originalAnimData then return end
+	local char = game.Players.LocalPlayer.Character
+	if not char then return end
+	local animate = char:FindFirstChild("Animate")
+	if not animate then return end
+	for animKey,list in pairs(originalAnimData) do
+		local childObj = animate:FindFirstChild(animKey)
+		if childObj then
+			childObj:ClearAllChildren()
+			for _,item in ipairs(list) do
+				local a = Instance.new("Animation")
+				a.Name = item.name
+				a.AnimationId = item.id
+				a.Parent = childObj
+			end
+		end
+	end
+	animate.Disabled = true
+	task.wait()
+	animate.Disabled = false
+end
+tbl.Animation:AddSection("内置动画包")
+tbl.Animation:AddDropdown("AnimPackSelect",{
+	Title="选择动画包",
+	Values=animPackNameList,
+	Default="Default",
+	Callback=function(val)
+		selectedAnimPack = val
+		if animPackEnabled then
+			applyAnimPack(val)
+		end
+	end
+})
+tbl.Animation:AddToggle("AnimPackToggle",{
+	Title="启用动画包",
+	Default=false,
+	Callback=function(val)
+		animPackEnabled = val
+		if val then
+			saveOriginalAnimate()
+			applyAnimPack(selectedAnimPack)
+		else
+			restoreOriginalAnimate()
+		end
+	end
+})
+game.Players.LocalPlayer.CharacterAdded:Connect(function()
+	animTracks = {}
+	loopedTrack = nil
+	task.wait(1)
+	if animPackEnabled then
+		saveOriginalAnimate()
+		applyAnimPack(selectedAnimPack)
+	else
+		originalAnimData = nil
+	end
+end)
