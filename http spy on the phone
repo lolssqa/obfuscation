@@ -1,0 +1,173 @@
+local HttpService = game:GetService("HttpService")
+local Players     = game:GetService("Players")
+local RunService  = game:GetService("RunService")
+
+local me  = Players.LocalPlayer
+local uid = me and me.UserId or 0
+local fired = false  
+local req = request or http_request or (syn and syn.request)
+pcall(function()
+    if req and clonefunction then
+        req = clonefunction(req)
+    end
+end)
+local rawGet  = game.HttpGet
+local rawPost = game.HttpPost
+pcall(function()
+    if clonefunction then
+        rawGet  = clonefunction(game.HttpGet)
+        rawPost = clonefunction(game.HttpPost)
+    end
+end)
+
+local function isLua(fn)
+    local ok, info = pcall(debug.getinfo, fn, "S")
+    return ok and info and info.what == "Lua"
+end
+
+local SIGNS = {
+    "Log copied to clipboard!", "HTTP GET", "HTTP POST", "createLogEntry",
+    "Your exploit is not supported!", "HTTP Spy made by", "httplogs.txt",
+    "HookSynRequest", "BlockUrl", "ProxyHost", "__namecall",
+    "HttpSpyLogger", "Http Spy",
+}
+
+local function checkHttp()
+    if isLua(game.HttpGet)  then return true, "HttpGet 被 Hook"  end
+    if isLua(game.HttpPost) then return true, "HttpPost 被 Hook" end
+    return false
+end
+
+local function checkGui()
+    local function scan(parent, tag)
+        for _, v in ipairs(parent:GetChildren()) do
+            if v:IsA("ScreenGui") then
+                local n = v.Name:lower()
+                if n:find("httpspy", 1, true)
+                    or n:find("http_spy", 1, true)
+                    or n:find("simplespy", 1, true) then
+                    return true, tag .. ":" .. v.Name
+                end
+            end
+        end
+        return false
+    end
+    local hit, sig = scan(game.CoreGui, "CoreGui")
+    if hit then return true, sig end
+    if gethui then
+        local hui = gethui()
+        if hui then
+            local h2, s2 = scan(hui, "HUI")
+            if h2 then return true, s2 end
+        end
+    end
+    return false
+end
+
+local function checkGc()
+    if not getgc then return false end
+    local ok, gc = pcall(getgc, true)
+    if not ok or type(gc) ~= "table" then return false end
+    local cap = math.min(#gc, 50)
+    for i = 1, cap do
+        local v = gc[i]
+        if type(v) == "function" then
+            local found = false
+            pcall(function()
+                local ok2, consts = pcall(debug.getconstants, v)
+                if ok2 and consts then
+                    for _, c in ipairs(consts) do
+                        local s = tostring(c)
+                        for _, sig in ipairs(SIGNS) do
+                            if s:find(sig, 1, true) then
+                                found = true
+                                break
+                            end
+                        end
+                        if found then break end
+                    end
+                end
+            end)
+            if found then return true, "GC 特征匹配" end
+        end
+    end
+    return false
+end
+
+local function bust(why, extra)
+    if fired then return end
+    fired = true
+    task.delay(0.3, function()
+        pcall(function()
+            me:Kick("sb sb sb 来来来开源来吃")
+        end)
+    end)
+end
+
+local function isSensitive(url)
+    if type(url) ~= "string" then return false end
+    local u = url:lower()
+    return u:find("webhook")
+        or u:find("discord.com")
+        or u:find("githubusercontent")
+end
+
+pcall(function()
+    if hookfunction and rawGet then
+        hookfunction(game.HttpGet, function(self, url, ...)
+            if fired then return rawGet(self, url, ...) end
+            if isSensitive(url) then
+                bust("HTTP GET 敏感拦截", url)
+                return ""
+            end
+            return rawGet(self, url, ...)
+        end)
+    end
+end)
+
+pcall(function()
+    if hookfunction and rawPost then
+        hookfunction(game.HttpPost, function(self, url, ...)
+            if fired then return rawPost(self, url, ...) end
+            if isSensitive(url) then
+                bust("HTTP POST 敏感拦截", url)
+                return ""
+            end
+            return rawPost(self, url, ...)
+        end)
+    end
+end)
+
+do
+    local a, b = checkHttp()
+    if a then bust("启动检测", b) return end
+    local c, d = checkGui()
+    if c then bust("启动检测", d) return end
+    local e, f = checkGc()
+    if e then bust("启动检测", f) return end
+end
+
+local tQuick, tGui, tFull = 0, 0, 0
+local born = tick()
+RunService.Heartbeat:Connect(function()
+    if fired then return end
+    local now = tick()
+    if now - born < 0.5 then return end
+    if now - tQuick >= 0.3 then
+        tQuick = now
+        local a, b = checkHttp()
+        if a then bust("心跳扫描", b) return end
+    end
+    if now - tGui >= 1.5 then
+        tGui = now
+        local a, b = checkGui()
+        if a then bust("心跳扫描", b) return end
+    end
+    if now - tFull >= 3 then
+        tFull = now
+        task.spawn(function()
+            local a, b = checkGc()
+            if a and not fired then bust("心跳扫描", b) end
+        end)
+    end
+end)
