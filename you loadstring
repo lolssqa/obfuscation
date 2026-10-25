@@ -1,0 +1,604 @@
+--[[
+    LU_HUB | INTRO + LOADING ANIMATION
+  MADE BY LY TEAM
+  hello word  
+]]
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local ContentProvider = game:GetService("ContentProvider")
+
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
+
+local BACKGROUND_ID = "rbxassetid://107146090859318"
+local ICON_ID = "rbxassetid://115187273703029"
+local MUSIC_ID = "rbxassetid://72800679508185"
+
+local INTRO_TIME = 1.2
+local LOADING_TIME = 6.1
+local FADE_TIME = 0.7
+
+local RED = Color3.fromRGB(210, 20, 40)
+local DARK_RED = Color3.fromRGB(75, 0, 12)
+local BLACK = Color3.fromRGB(5, 5, 8)
+local WHITE = Color3.fromRGB(255, 255, 255)
+
+local OldGui = PlayerGui:FindFirstChild("LU_HUB_Loading")
+if OldGui then
+    OldGui:Destroy()
+end
+
+local Gui = Instance.new("ScreenGui")
+Gui.Name = "LU_HUB_Loading"
+Gui.IgnoreGuiInset = true
+Gui.ResetOnSpawn = false
+Gui.DisplayOrder = 999999
+Gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+Gui.Parent = PlayerGui
+
+local Alive = true
+
+local function Tween(Object, Time, Properties, Style, Direction)
+    local Info = TweenInfo.new(
+        Time,
+        Style or Enum.EasingStyle.Quint,
+        Direction or Enum.EasingDirection.Out
+    )
+
+    local Animation = TweenService:Create(Object, Info, Properties)
+    Animation:Play()
+
+    return Animation
+end
+
+local function AddCorner(Object, Radius)
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, Radius)
+    Corner.Parent = Object
+    return Corner
+end
+
+local Background = Instance.new("ImageLabel")
+Background.Name = "Background"
+Background.Size = UDim2.fromScale(1, 1)
+Background.Position = UDim2.fromScale(0, 0)
+Background.BackgroundColor3 = BLACK
+Background.BackgroundTransparency = 0
+Background.Image = BACKGROUND_ID
+Background.ImageTransparency = 0.32
+Background.ScaleType = Enum.ScaleType.Crop
+Background.ZIndex = 1
+Background.Parent = Gui
+
+local DarkOverlay = Instance.new("Frame")
+DarkOverlay.Name = "DarkOverlay"
+DarkOverlay.Size = UDim2.fromScale(1, 1)
+DarkOverlay.BackgroundColor3 = BLACK
+DarkOverlay.BackgroundTransparency = 0.3
+DarkOverlay.BorderSizePixel = 0
+DarkOverlay.ZIndex = 2
+DarkOverlay.Parent = Gui
+
+local RedOverlay = Instance.new("Frame")
+RedOverlay.Name = "RedOverlay"
+RedOverlay.Size = UDim2.fromScale(1, 1)
+RedOverlay.BackgroundColor3 = RED
+RedOverlay.BackgroundTransparency = 0.88
+RedOverlay.BorderSizePixel = 0
+RedOverlay.ZIndex = 3
+RedOverlay.Parent = Gui
+
+local RedGradient = Instance.new("UIGradient")
+RedGradient.Rotation = 45
+RedGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, BLACK),
+    ColorSequenceKeypoint.new(0.5, DARK_RED),
+    ColorSequenceKeypoint.new(1, BLACK)
+})
+RedGradient.Parent = RedOverlay
+
+local PatternFolder = Instance.new("Folder")
+PatternFolder.Name = "BackgroundPatterns"
+PatternFolder.Parent = Gui
+
+local Patterns = {}
+
+for i = 1, 24 do
+    local Line = Instance.new("Frame")
+    Line.Name = "Pattern_" .. i
+    Line.AnchorPoint = Vector2.new(0.5, 0.5)
+    Line.Size = UDim2.new(0, math.random(90, 220), 0, 1)
+    Line.Position = UDim2.new(
+        math.random(-10, 110) / 100,
+        0,
+        math.random(-10, 110) / 100,
+        0
+    )
+    Line.Rotation = -35
+    Line.BackgroundColor3 = RED
+    Line.BackgroundTransparency = math.random(65, 88) / 100
+    Line.BorderSizePixel = 0
+    Line.ZIndex = 4
+    Line.Parent = PatternFolder
+
+    table.insert(Patterns, Line)
+end
+
+local Center = Instance.new("Frame")
+Center.Name = "Center"
+Center.AnchorPoint = Vector2.new(0.5, 0.5)
+Center.Position = UDim2.fromScale(0.5, 0.43)
+Center.Size = UDim2.new(0, 360, 0, 280)
+Center.BackgroundTransparency = 1
+Center.ZIndex = 10
+Center.Parent = Gui
+
+local CenterScale = Instance.new("UIScale")
+CenterScale.Scale = 0.75
+CenterScale.Parent = Center
+
+local Glow = Instance.new("Frame")
+Glow.Name = "Glow"
+Glow.AnchorPoint = Vector2.new(0.5, 0.5)
+Glow.Position = UDim2.new(0.5, 0, 0.28, 0)
+Glow.Size = UDim2.new(0, 118, 0, 118)
+Glow.BackgroundColor3 = RED
+Glow.BackgroundTransparency = 0.76
+Glow.BorderSizePixel = 0
+Glow.ZIndex = 10
+Glow.Parent = Center
+
+AddCorner(Glow, 24)
+
+local GlowStroke = Instance.new("UIStroke")
+GlowStroke.Color = RED
+GlowStroke.Thickness = 2
+GlowStroke.Transparency = 0.15
+GlowStroke.Parent = Glow
+
+local Icon = Instance.new("ImageLabel")
+Icon.Name = "MM2Icon"
+Icon.AnchorPoint = Vector2.new(0.5, 0.5)
+Icon.Position = UDim2.new(0.5, 0, 0.28, 0)
+Icon.Size = UDim2.new(0, 88, 0, 88)
+Icon.BackgroundTransparency = 1
+Icon.Image = ICON_ID
+Icon.ImageTransparency = 1
+Icon.Rotation = -25
+Icon.ScaleType = Enum.ScaleType.Fit
+Icon.ZIndex = 12
+Icon.Parent = Center
+
+local Title = Instance.new("TextLabel")
+Title.Name = "Title"
+Title.AnchorPoint = Vector2.new(0.5, 0.5)
+Title.Position = UDim2.new(0.5, 0, 0.58, 0)
+Title.Size = UDim2.new(1, 0, 0, 52)
+Title.BackgroundTransparency = 1
+Title.Text = "LU_HUB"
+Title.TextColor3 = WHITE
+Title.TextTransparency = 1
+Title.TextSize = 38
+Title.Font = Enum.Font.GothamBlack
+Title.ZIndex = 12
+Title.Parent = Center
+
+local TitleStroke = Instance.new("UIStroke")
+TitleStroke.Color = RED
+TitleStroke.Thickness = 1.5
+TitleStroke.Transparency = 1
+TitleStroke.Parent = Title
+
+local TitleGradient = Instance.new("UIGradient")
+TitleGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, WHITE),
+    ColorSequenceKeypoint.new(0.5, RED),
+    ColorSequenceKeypoint.new(1, WHITE)
+})
+TitleGradient.Parent = Title
+
+--// 副标题
+local Subtitle = Instance.new("TextLabel")
+Subtitle.Name = "Subtitle"
+Subtitle.AnchorPoint = Vector2.new(0.5, 0.5)
+Subtitle.Position = UDim2.new(0.5, 0, 0.72, 0)
+Subtitle.Size = UDim2.new(1, 0, 0, 22)
+Subtitle.BackgroundTransparency = 1
+Subtitle.Text = "MADE BY LY TEAM"
+Subtitle.TextColor3 = Color3.fromRGB(200, 200, 200)
+Subtitle.TextTransparency = 1
+Subtitle.TextSize = 11
+Subtitle.Font = Enum.Font.GothamMedium
+Subtitle.ZIndex = 12
+Subtitle.Parent = Center
+
+local LoadingText = Instance.new("TextLabel")
+LoadingText.Name = "LoadingText"
+LoadingText.AnchorPoint = Vector2.new(0.5, 0.5)
+LoadingText.Position = UDim2.new(0.5, 0, 0.83, 0)
+LoadingText.Size = UDim2.new(1, 0, 0, 24)
+LoadingText.BackgroundTransparency = 1
+LoadingText.Text = "INITIALIZING..."
+LoadingText.TextColor3 = WHITE
+LoadingText.TextTransparency = 1
+LoadingText.TextSize = 12
+LoadingText.Font = Enum.Font.GothamBold
+LoadingText.ZIndex = 12
+LoadingText.Parent = Center
+
+local BarBackground = Instance.new("Frame")
+BarBackground.Name = "ProgressBackground"
+BarBackground.AnchorPoint = Vector2.new(0.5, 0.5)
+BarBackground.Position = UDim2.new(0.5, 0, 0.92, 0)
+BarBackground.Size = UDim2.new(0, 280, 0, 5)
+BarBackground.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+BarBackground.BackgroundTransparency = 1
+BarBackground.BorderSizePixel = 0
+BarBackground.ZIndex = 12
+BarBackground.Parent = Center
+
+AddCorner(BarBackground, 8)
+
+local BarFill = Instance.new("Frame")
+BarFill.Name = "ProgressFill"
+BarFill.Size = UDim2.new(0, 0, 1, 0)
+BarFill.BackgroundColor3 = RED
+BarFill.BorderSizePixel = 0
+BarFill.ZIndex = 13
+BarFill.Parent = BarBackground
+
+AddCorner(BarFill, 8)
+
+local BarGradient = Instance.new("UIGradient")
+BarGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, DARK_RED),
+    ColorSequenceKeypoint.new(0.5, RED),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 80, 95))
+})
+BarGradient.Parent = BarFill
+
+local Percent = Instance.new("TextLabel")
+Percent.Name = "Percent"
+Percent.AnchorPoint = Vector2.new(0.5, 0.5)
+Percent.Position = UDim2.new(0.5, 0, 0.98, 0)
+Percent.Size = UDim2.new(1, 0, 0, 18)
+Percent.BackgroundTransparency = 1
+Percent.Text = "0%"
+Percent.TextColor3 = Color3.fromRGB(190, 190, 190)
+Percent.TextTransparency = 1
+Percent.TextSize = 10
+Percent.Font = Enum.Font.GothamMedium
+Percent.ZIndex = 12
+Percent.Parent = Center
+
+local Music = Instance.new("Sound")
+Music.Name = "LU_HUB_Music"
+Music.SoundId = MUSIC_ID
+Music.Volume = 0.55
+Music.Looped = true
+Music.Parent = Gui
+
+local Intro = Instance.new("Frame")
+Intro.Name = "Intro"
+Intro.Size = UDim2.fromScale(1, 1)
+Intro.BackgroundColor3 = Color3.fromRGB(2, 2, 4)
+Intro.BackgroundTransparency = 0
+Intro.BorderSizePixel = 0
+Intro.ZIndex = 100
+Intro.Parent = Gui
+
+local Slash = Instance.new("Frame")
+Slash.Name = "IntroSlash"
+Slash.AnchorPoint = Vector2.new(0.5, 0.5)
+Slash.Position = UDim2.fromScale(0.5, 0.5)
+Slash.Size = UDim2.new(0, 0, 0, 3)
+Slash.Rotation = -25
+Slash.BackgroundColor3 = RED
+Slash.BorderSizePixel = 0
+Slash.ZIndex = 102
+Slash.Parent = Intro
+
+local SlashGlow = Instance.new("UIStroke")
+SlashGlow.Color = RED
+SlashGlow.Thickness = 2
+SlashGlow.Transparency = 0.25
+SlashGlow.Parent = Slash
+
+local IntroTitle = Instance.new("TextLabel")
+IntroTitle.Name = "IntroTitle"
+IntroTitle.AnchorPoint = Vector2.new(0.5, 0.5)
+IntroTitle.Position = UDim2.fromScale(0.5, 0.5)
+IntroTitle.Size = UDim2.new(0.8, 0, 0, 75)
+IntroTitle.BackgroundTransparency = 1
+IntroTitle.Text = "LU_HUB"
+IntroTitle.TextColor3 = WHITE
+IntroTitle.TextTransparency = 1
+IntroTitle.TextScaled = true
+IntroTitle.Font = Enum.Font.GothamBlack
+IntroTitle.ZIndex = 103
+IntroTitle.Parent = Intro
+
+local IntroTitleLimit = Instance.new("UITextSizeConstraint")
+IntroTitleLimit.MaxTextSize = 54
+IntroTitleLimit.MinTextSize = 20
+IntroTitleLimit.Parent = IntroTitle
+
+local IntroTitleStroke = Instance.new("UIStroke")
+IntroTitleStroke.Color = RED
+IntroTitleStroke.Thickness = 2
+IntroTitleStroke.Transparency = 1
+IntroTitleStroke.Parent = IntroTitle
+
+task.spawn(function()
+    pcall(function()
+        ContentProvider:PreloadAsync({Music})
+    end)
+end)
+
+task.spawn(function()
+    while Alive and Gui.Parent do
+        for _, Line in ipairs(Patterns) do
+            if not Alive then
+                break
+            end
+
+            if Line.Parent then
+                local NewX = math.random(-10, 110) / 100
+                local NewY = math.random(-10, 110) / 100
+
+                Tween(Line, math.random(25, 45) / 10, {
+                    Position = UDim2.fromScale(NewX, NewY),
+                    BackgroundTransparency = math.random(65, 88) / 100
+                }, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+            end
+        end
+
+        task.wait(1.5)
+    end
+end)
+
+pcall(function()
+    Music:Play()
+end)
+
+
+
+Tween(Slash, 0.45, {
+    Size = UDim2.new(1.5, 0, 0, 3)
+}, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+
+task.wait(0.16)
+
+Tween(IntroTitle, 0.45, {
+    TextTransparency = 0
+}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+
+Tween(IntroTitleStroke, 0.45, {
+    Transparency = 0.1
+})
+
+task.wait(0.32)
+
+Tween(Slash, 0.25, {
+    BackgroundTransparency = 1,
+    Size = UDim2.new(1.8, 0, 0, 1)
+})
+
+Tween(IntroTitle, 0.28, {
+    TextTransparency = 1
+})
+
+Tween(IntroTitleStroke, 0.28, {
+    Transparency = 1
+})
+
+task.wait(0.28)
+
+Tween(Intro, 0.25, {
+    BackgroundTransparency = 1
+})
+
+task.wait(0.05)
+
+Intro:Destroy()
+
+
+
+Tween(CenterScale, 0.65, {
+    Scale = 1
+}, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+
+Tween(Icon, 0.65, {
+    ImageTransparency = 0,
+    Rotation = 0
+}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+
+Tween(Glow, 0.5, {
+    BackgroundTransparency = 0.65
+})
+
+Tween(GlowStroke, 0.5, {
+    Transparency = 0.05
+})
+
+Tween(Title, 0.65, {
+    TextTransparency = 0
+}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+
+Tween(TitleStroke, 0.65, {
+    Transparency = 0.1
+})
+
+Tween(Subtitle, 0.6, {
+    TextTransparency = 0
+})
+
+Tween(LoadingText, 0.6, {
+    TextTransparency = 0
+})
+
+Tween(BarBackground, 0.5, {
+    BackgroundTransparency = 0
+})
+
+Tween(Percent, 0.5, {
+    TextTransparency = 0
+})
+
+task.spawn(function()
+    while Alive and Gui.Parent do
+        Tween(Glow, 0.8, {
+            BackgroundTransparency = 0.48
+        }, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+
+        Tween(Icon, 0.8, {
+            Rotation = 4
+        }, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+
+        task.wait(0.8)
+
+        if not Alive then
+            break
+        end
+
+        Tween(Glow, 0.8, {
+            BackgroundTransparency = 0.72
+        }, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+
+        Tween(Icon, 0.8, {
+            Rotation = -4
+        }, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+
+        task.wait(0.8)
+    end
+end)
+
+task.spawn(function()
+    while Alive and Gui.Parent do
+        Tween(TitleStroke, 0.7, {
+            Transparency = 0.35
+        }, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+
+        task.wait(0.7)
+
+        if not Alive then
+            break
+        end
+
+        Tween(TitleStroke, 0.7, {
+            Transparency = 0.05
+        }, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+
+        task.wait(0.7)
+    end
+end)
+
+local StartTime = os.clock()
+local LastPercent = -1
+
+while true do
+    local Elapsed = os.clock() - StartTime
+    local Progress = math.clamp(Elapsed / LOADING_TIME, 0, 1)
+    local CurrentPercent = math.floor(Progress * 100)
+
+    BarFill.Size = UDim2.new(Progress, 0, 1, 0)
+
+    if CurrentPercent ~= LastPercent then
+        Percent.Text = tostring(CurrentPercent) .. "%"
+        LastPercent = CurrentPercent
+    end
+
+    if Progress >= 1 then
+        break
+    end
+
+    RunService.Heartbeat:Wait()
+end
+
+BarFill.Size = UDim2.new(1, 0, 1, 0)
+Percent.Text = "100%"
+LoadingText.Text = "INITIALIZATION COMPLETE"
+
+task.wait(0.08)
+
+
+Alive = false
+
+Tween(Music, FADE_TIME, {
+    Volume = 0
+}, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+
+Tween(Background, FADE_TIME, {
+    ImageTransparency = 1,
+    BackgroundTransparency = 1
+})
+
+Tween(DarkOverlay, FADE_TIME, {
+    BackgroundTransparency = 1
+})
+
+Tween(RedOverlay, FADE_TIME, {
+    BackgroundTransparency = 1
+})
+
+Tween(CenterScale, FADE_TIME, {
+    Scale = 1.12
+})
+
+Tween(Icon, FADE_TIME, {
+    ImageTransparency = 1
+})
+
+Tween(Title, FADE_TIME, {
+    TextTransparency = 1
+})
+
+Tween(TitleStroke, FADE_TIME, {
+    Transparency = 1
+})
+
+Tween(Subtitle, FADE_TIME, {
+    TextTransparency = 1
+})
+
+Tween(LoadingText, FADE_TIME, {
+    TextTransparency = 1
+})
+
+Tween(Percent, FADE_TIME, {
+    TextTransparency = 1
+})
+
+Tween(BarBackground, FADE_TIME, {
+    BackgroundTransparency = 1
+})
+
+Tween(BarFill, FADE_TIME, {
+    BackgroundTransparency = 1
+})
+
+Tween(Glow, FADE_TIME, {
+    BackgroundTransparency = 1
+})
+
+Tween(GlowStroke, FADE_TIME, {
+    Transparency = 1
+})
+
+for _, Line in ipairs(Patterns) do
+    Tween(Line, FADE_TIME, {
+        BackgroundTransparency = 1
+    })
+end
+
+task.wait(FADE_TIME)
+
+pcall(function()
+    Music:Stop()
+end)
+
+if Gui and Gui.Parent then
+    Gui:Destroy()
+end
