@@ -1,0 +1,123 @@
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "DynamicIsland"
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = PlayerGui
+
+local Island = Instance.new("Frame")
+Island.Name = "Island"
+Island.BackgroundColor3 = Color3.new(0,0,0)
+Island.AnchorPoint = Vector2.new(0.5,0.5)
+Island.Size = UDim2.new(0,32,0,32)
+Island.Position = UDim2.new(0.5,0,0,48)
+Island.BorderSizePixel = 0
+Island.Parent = ScreenGui
+
+local IslandCorner = Instance.new("UICorner")
+IslandCorner.CornerRadius = UDim.new(0,16)
+IslandCorner.Parent = Island
+
+local YellowDot = Instance.new("Frame")
+YellowDot.Name = "RecordDot"
+YellowDot.BackgroundColor3 = Color3.fromRGB(255,204,0)
+YellowDot.AnchorPoint = Vector2.new(0, 0.5)
+YellowDot.Size = UDim2.new(0,12,0,12)
+YellowDot.Position = UDim2.new(0,12,0.5,0)
+YellowDot.BorderSizePixel = 0
+YellowDot.Visible = false
+YellowDot.Parent = Island
+
+local DotCorner = Instance.new("UICorner")
+DotCorner.CornerRadius = UDim.new(1,0)
+DotCorner.Parent = YellowDot
+
+local TextLabel = Instance.new("TextLabel")
+TextLabel.BackgroundTransparency = 1
+TextLabel.AnchorPoint = Vector2.new(0,0.5)
+TextLabel.Position = UDim2.new(0, 30, 0.5, 0)
+TextLabel.Size = UDim2.new(1, -80, 0, 22)
+TextLabel.Font = Enum.Font.GothamBold
+TextLabel.TextSize = 17
+TextLabel.TextColor3 = Color3.new(1,1,1)
+TextLabel.TextTransparency = 1
+TextLabel.TextXAlignment = Enum.TextXAlignment.Left
+TextLabel.Parent = Island
+
+local Avatar = Instance.new("ImageLabel")
+Avatar.Name = "Avatar"
+Avatar.BackgroundTransparency = 1
+Avatar.AnchorPoint = Vector2.new(1,0.5)
+Avatar.Size = UDim2.new(0,26,0,26)
+Avatar.Position = UDim2.new(1, -12, 0.5, 0)
+Avatar.Image = "rbxthumb://type=AvatarHeadShot&id=" .. LocalPlayer.UserId .. "&w=150&h=150"
+Avatar.Visible = false
+Avatar.Parent = Island
+
+local AvatarCorner = Instance.new("UICorner")
+AvatarCorner.CornerRadius = UDim.new(1,0)
+AvatarCorner.Parent = Avatar
+
+local Username = LocalPlayer.Name
+
+local hour = tonumber(os.date("%H"))
+local greet
+if hour >= 6 and hour < 10 then
+    greet = "早上好 "..Username
+elseif hour >= 10 and hour < 12 then
+    greet = "中午好 "..Username
+elseif hour >= 12 and hour < 21 then
+    greet = "晚上好 "..Username
+else
+    greet = "这么晚了还不睡觉 "..Username
+end
+
+local TweenDotExpand = TweenInfo.new(0.4, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out)
+local TweenTextFade = TweenInfo.new(0.3, Enum.EasingStyle.Linear)
+local TweenShrink = TweenInfo.new(0.35, Enum.EasingStyle.Cubic, Enum.EasingDirection.In)
+local TweenBreathe = TweenInfo.new(0.7, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, math.huge, true)
+local BreatheTween = TweenService:Create(YellowDot, TweenBreathe, {BackgroundTransparency = 0.4})
+BreatheTween:Play()
+
+local ExpandTween = TweenService:Create(Island, TweenDotExpand, {
+    Size = UDim2.new(0, 340, 0, 34)
+})
+ExpandTween:Play()
+task.wait(0.4)
+YellowDot.Visible = true
+
+TextLabel.Text = "✅ 全局注入成功"
+local FadeIn1 = TweenService:Create(TextLabel, TweenTextFade, {TextTransparency = 0})
+FadeIn1:Play()
+task.wait(0.3)
+task.wait(1.7)
+
+local FadeOut1 = TweenService:Create(TextLabel, TweenTextFade, {TextTransparency = 1})
+FadeOut1:Play()
+task.wait(0.3)
+
+TextLabel.Text = "👋 "..greet
+Avatar.Visible = true
+local FadeIn2 = TweenService:Create(TextLabel, TweenTextFade, {TextTransparency = 0})
+FadeIn2:Play()
+task.wait(0.3)
+task.wait(2.2)
+
+local FadeOut2 = TweenService:Create(TextLabel, TweenTextFade, {TextTransparency = 1})
+FadeOut2:Play()
+task.wait(0.3)
+
+YellowDot.Visible = false
+Avatar.Visible = false
+
+local ShrinkTween = TweenService:Create(Island, TweenShrink, {
+    Size = UDim2.new(0, 32, 0, 32)
+})
+ShrinkTween:Play()
+task.wait(0.35)
+
+ScreenGui:Destroy()
