@@ -1,0 +1,146 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local CONFIGS = {
+    ["wjzb39"] = {
+        Text = "LY TEAM SUPPORT"
+    },
+    ["godwhy71"] = {
+        Text = "LY TEAM SUPPORT"
+    }
+}
+
+local RED = Color3.fromRGB(220, 20, 20)
+local WHITE = Color3.fromRGB(255, 255, 255)
+
+local function toHex(color)
+    return string.format("%02x%02x%02x",
+        math.floor(color.R * 255),
+        math.floor(color.G * 255),
+        math.floor(color.B * 255)
+    )
+end
+
+local function createDevourText(text, offset)
+    local len = #text
+    if len <= 0 then return "" end
+    local result = {}
+    for i = 1, len do
+        local char = text:sub(i, i)
+        local pos = (i - 1) / (len - 1)
+        local blend = math.clamp((pos - offset) / 0.32, 0, 1)
+        local charColor = RED:Lerp(WHITE, blend)
+        table.insert(result, string.format('<font color="#%s">%s</font>', toHex(charColor), char))
+    end
+    return table.concat(result)
+end
+
+local function setupPlayer(player)
+    if not player or player.Parent ~= Players then return end
+    local config = CONFIGS[player.Name]
+    if not config then return end
+
+    local function addTag()
+        task.spawn(function()
+            local character = player.Character
+            if not character then
+                local success
+                success, character = pcall(function()
+                    return player.CharacterAdded:Wait(10)
+                end)
+                if not success or not character then return end
+            end
+
+            local head = character:WaitForChild("Head", 5)
+            if not head then return end
+
+            local old = head:FindFirstChild("LYTeamTag")
+            if old then old:Destroy() end
+
+            local billboard = Instance.new("BillboardGui")
+            billboard.Name = "LYTeamTag"
+            billboard.Size = UDim2.new(0, 320, 0, 80)
+            billboard.StudsOffset = Vector3.new(0, 2.7, 0)
+            billboard.AlwaysOnTop = true
+            billboard.MaxDistance = 120
+            billboard.ClipsDescendants = false
+
+            local background = Instance.new("Frame")
+            background.Name = "Background"
+            background.Size = UDim2.new(1, 0, 1, 0)
+            background.Position = UDim2.new(0.5, 0, 0.5, 0)
+            background.AnchorPoint = Vector2.new(0.5, 0.5)
+            background.BackgroundColor3 = RED
+            background.BackgroundTransparency = 0.4
+            background.Parent = billboard
+
+            local backgroundCorner = Instance.new("UICorner")
+            backgroundCorner.CornerRadius = UDim.new(0.4, 0)
+            backgroundCorner.Parent = background
+
+            local label = Instance.new("TextLabel")
+            label.Size = UDim2.new(1, 0, 1, 0)
+            label.Position = UDim2.new(0.5, 0, 0.5, 0)
+            label.AnchorPoint = Vector2.new(0.5, 0.5)
+            label.BackgroundTransparency = 1
+            label.RichText = true
+            label.TextScaled = true
+            label.Font = Enum.Font.GothamBold
+            label.TextStrokeColor3 = Color3.new(0, 0, 0)
+            label.TextStrokeTransparency = 0.4
+            label.Parent = billboard
+
+            local stroke = Instance.new("UIStroke")
+            stroke.Thickness = 3
+            stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+            stroke.Parent = background
+
+            local devourOffset = 0
+            local breathePhase = 0
+            local isResetting = false
+            local conn
+
+            conn = RunService.Heartbeat:Connect(function(dt)
+                if not label or not label:IsDescendantOf(game) then
+                    if conn then conn:Disconnect() end
+                    return
+                end
+
+                if not isResetting then
+                    devourOffset += dt * 0.75
+                    if devourOffset >= 1 then
+                        isResetting = true
+                    end
+                else
+                    devourOffset -= dt * 0.45
+                    if devourOffset <= 0 then
+                        devourOffset = 0
+                        isResetting = false
+                    end
+                end
+
+                label.Text = createDevourText(config.Text, devourOffset)
+                background.BackgroundColor3 = RED:Lerp(WHITE, devourOffset)
+                background.BackgroundTransparency = 0.4 - devourOffset * 0.15
+
+                breathePhase += dt * 0.9
+                local breathT = (math.sin(breathePhase) + 1) / 2
+                stroke.Color = RED:Lerp(WHITE, breathT)
+                stroke.Thickness = 3.2 + breathT * 1.6
+                stroke.Transparency = 0.3 - breathT * 0.1
+            end)
+
+            billboard.Parent = head
+        end)
+    end
+
+    if player.Character then
+        addTag()
+    end
+    player.CharacterAdded:Connect(addTag)
+end
+
+for _, ply in ipairs(Players:GetPlayers()) do
+    setupPlayer(ply)
+end
+Players.PlayerAdded:Connect(setupPlayer)
